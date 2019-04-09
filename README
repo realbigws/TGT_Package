@@ -81,7 +81,7 @@ cd ../../
 Database:
 =========
 
-1. if databases/uniprot20 not exist, create it by 
+1. if databases/ not exist, create it by 
 
 mkdir -p databases/
 
@@ -166,7 +166,7 @@ Running example:
 ================
 
 #-> 1. by default, we run HHblits to generate A3M
-./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out
+./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -d uniprot20_2016_02
 
 #-> 2. we may also use JackHMM to produce A3M
 ./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h jackhmm -d uniref90_2018_06 -n 3
