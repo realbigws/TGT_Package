@@ -20,7 +20,3 @@ else
 	echo "jackhmmer has already been installed in the local directory"
 fi
 
-
-#------------- install util ---------------------#
-if [ ! -s 
-

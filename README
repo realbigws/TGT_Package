@@ -59,13 +59,6 @@ cd ../
 
 3. jackhmmer (optional)
 
-for the first time, follow the below instruction to install jackhmmer, if 'jackhmmer' is NOT exist or NOT runnable in your system.
-
-cd jackhmm/
-	./install.sh
-cd ../
-
-
 To compile the other executables, run the following commands:
 
 cd jackhmm/source_code/
@@ -184,4 +177,22 @@ Running example:
 ./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h buildali2 -d nr_databases -n 5
 
 
+
+
+===========
+References:
+===========
+
+[hhsuite]:
+     https://github.com/soedinglab/hh-suite
+
+[jackhmmer]:
+    http://eddylab.org/software/hmmer3/3.1b2
+
+[blastpgp]:
+    a) legacy version:
+        ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy.NOTSUPPORTED/2.2.26/
+
+    b) current version:
+        ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.29/
 
