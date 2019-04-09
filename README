@@ -4,7 +4,7 @@ A3M_TGT_Gen.sh (v1.07)
 =============================
 
 Abstract:
-Construct sequence features in TGT format via the search of homology protein sequences/structures for a query sequence in FASTA format.
+Construct sequence features in TGT format via the search of homology protein sequences for a query sequence in FASTA format.
 Also generate the Multiple Sequence Alignment (MSA) in A3M format.
 
 
