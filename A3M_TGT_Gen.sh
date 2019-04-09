@@ -72,7 +72,7 @@ query_seq=""
 
 #-> optional arguments
 hhsuite=hhsuite2              #-> can be hhsuite2, hhsuite3, jackhmm, and buildali2
-uniprot20=uniprot20_2016_02   #-> can be uniprot20, uniclust30, uniref90, and NR_New
+uniprot20=uniclust30          #-> can be uniprot20, uniclust30, uniref90, and NR_New
 out_root=""     #-> output to current directory
 cpu_num=4       #-> use 4 CPUs
 memory="3.0"    #-> use 3.0G memory
