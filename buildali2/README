@@ -1,0 +1,98 @@
+=================
+BuildAli2_Package
+(Version v1.052)
+=================
+
+A fast and reliable version to build A3M from input protein FASTA sequence
+
+
+========
+Install:
+========
+
+1. download the package
+
+git clone --recursive https://bitbucket.org/realbigws/buildali2
+cd buildali2
+
+--------------
+
+2. compile
+
+cd source_code/
+        make
+cd ../
+
+
+
+======
+Usage:
+======
+
+BuildAli2 -i query_file [-o a3m_out] [-d nr90] [-D nr70] [-u util_root]
+          [-m max_iter] [-c cpu_num] [-r tmp_root] [-k remove] [-b] [-n]
+
+Usage :
+
+-i query_file :        Input query file in FASTA format.
+
+-o a3m_out :           Output A3M file. ( default = <query_name>.a3m )
+
+-d nr90 :              Location of formatted nr90 database by formatdb.
+                       ( default = databases/NR_new/nr90 )
+
+-D nr70 :              Location of formatted nr70 database by formatdb.
+                       ( default = databases/NR_new/nr70 )
+
+-u util_root :         Directory for Utility Functions. (default=util/ )
+
+-m max_iter :          Maximal iteration. (default=5)
+
+-c cpu_num :           CPU number. (default=1)
+
+-r tmp_root :          Directory to put temporary files. ( default=tmp/ )
+
+-k remove :            If specified, then remove all temporary files.
+                       ( [0] for remove all, 1 for keep a3m, 2 for keep all )
+
+-b :                   If specified, then will NOT break during iteration.
+                       (by default, will break during iteration)
+
+-n :                   If specified, then apply psiblast. (default=blasgpgp)
+
+Note: the following Utility Functions, say
+      BLAST/psiblast, BLAST_To_A3M, AlignHits, A3M_To_PSI, MSA_To_PSSM, hh_filter
+      should be located at the [util_root] directory.
+
+
+
+========
+Example:
+========
+
+./BuildAli2 -i 1pazA.seq -c 12
+
+the result should be 1pazA.a3m
+
+Note:
+nr90 and nr70 must be put in databases/NR_new
+
+
+
+==========
+Notations:
+==========
+
+we have two versions, a) old and b) new
+
+for a) old,
+1. blasgpgp is applied
+2. AlignHits_old is applied (with different cut length for CORE and NORMAL, say 20 and 50)
+
+for b) new,
+1. psiblast is applied
+2. AlignHits_new is applied (for CORE and NORMAL, the same cut length is used, say 50)
+
+for both old and new, hh_filter_old is applied.
+
+

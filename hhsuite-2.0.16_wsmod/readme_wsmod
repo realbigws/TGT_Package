@@ -1,0 +1,106 @@
+
+***** HHsuite_package *****
+
+To download hhsuite:
+http://wwwuser.gwdg.de/~compbiol/data/hhsuite/releases/all/hhsuite-2.0.16.tar.gz
+
+To modify hhsuite:
+http://gremlin.bakerlab.org/cplx_faq.php
+HHblits has a hard-coded limit of 65535 sequences. To overcome this, you must modify the code as follows:
+in: src/hhdecl.C: EXTERN const int MAXSEQ=262140;
+in: src/hhfullalignment.C: long unsigned int lq[MAXSEQ];
+in: src/hhfullalignment.C: long unsigned int lt[MAXSEQ];
+
+
+
+
+================================= fix a Big Bug in HHsuite ==============================
+
+Overall, the bug appeared in the size allocation in the initial step of 'init_prefilter'.
+
+This is because of the failure obtain of the correct size of the database of the "*.cs219.sizes"
+
+---------------------------------
+
+In particular, the file "uniprot20_2016_02.cs219.sizes" in the old uniprot20 database is as following:
+
+8290068 1874100330
+
+where the total database size (i.e., the total number of AA residues) is below 2147483647, which is the upper limit of <int>.
+https://en.wikibooks.org/wiki/C_Programming/limits.h
+
+---------------------------------
+
+However, the corresponding file "uniclust30_2017_07.cs219.sizes" in the new uniclust30 database is as following:
+
+13012059 3476305951
+
+where the second value is beyond the upper limit of <int>.
+
+---------------------------------
+
+Thus, the easiest way to solve this problem is to replace the corresponding variable from <int> to <long>.
+
+========================================================
+
+
+[1] first modification in file "src/hhprefilter.C"
+
+ const int NUMCOLSTATES = cs::AS219::kSize;
+-int LDB = 0;              // number of characters of input prefilter database file
++long LDB = 0;              // number of characters of input prefilter database file
+ int num_dbs = 0;          // number of sequences in prefilter database file
+ Hash<char>* doubled;
+
+@@ -824,7 +824,7 @@ void init_prefilter()
+   // Read in database
+   num_dbs = 0;
+   int len = 0;
+-  int pos = 0;
++  long pos = 0;
+   char word[NAMELEN];
+   FILE* dbf = NULL;
+   dbf = fopen(db,"rb");
+
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+[2] second modification in file "src/hhutil.C"
+
+
+-int CountSeqsInFile(char* file, int& numseqs)
++long CountSeqsInFile(char* file, int& numseqs)
+ {
+   char line[LINELEN]="";         // input line
+   char tmp_file[NAMELEN];
+-  int LDB=0;
++  long LDB=0;
+   numseqs=0;
+   strcpy(tmp_file, file);
+   strcat(tmp_file, ".sizes");
+@@ -521,7 +522,7 @@ int CountSeqsInFile(char* file, int& numseqs)
+     {
+       char* ptr=fgets(line, LINELEN, fin);
+       numseqs = strint(ptr);
+-      LDB = strint(ptr);
++      LDB = strtol(ptr, &ptr, 10);
+       fclose(fin);
+      }
+   else
+
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+[3] third modification in file "src/hhprefilter.C"
+
+-  X = (unsigned char*)memalign(16,LDB*sizeof(unsigned char));                     // database string (concatenate all DB-seqs)
+-  first = (unsigned char**)memalign(16,(par.dbsize+2)*sizeof(unsigned char*));    // first characters of db sequences. Was (par.dbsize*2). Why??
+-  length = (int*)memalign(16,(par.dbsize+2)*sizeof(int));                         // lengths of db sequences Was (par.dbsize*2). Why??
++  X = (unsigned char*)memalign(32,LDB*sizeof(unsigned char));                     // database string (concatenate all DB-seqs)
++  first = (unsigned char**)memalign(32,(par.dbsize+2)*sizeof(unsigned char*));    // first characters of db sequences. Was (par.dbsize*2). Why??
++  length = (int*)memalign(32,(par.dbsize+2)*sizeof(int));                         // lengths of db sequences Was (par.dbsize*2). Why??
+
+
+=========================================================================================
+
+

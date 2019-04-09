@@ -1,0 +1,12 @@
+Compile: AlignHits
+g++ AlignHits_v1.01.cpp getopt.cpp -O3 -static -o AlignHits
+
+Compile: A3M_To_PSI
+g++ A3M_To_PSI_v1.01.cpp -O3 -static -o A3M_To_PSI
+
+Compile: BLAST_To_A3M
+g++ BLAST_To_A3M_v1.03.cpp -O3 -static -o BLAST_To_A3M
+
+Compile: hh_filter
+cd hhprofile_src; g++ -static -o hh_filter -fno-strict-aliasing -O3 hh_filter.cpp hhpred_ali.cpp hhpred_hit.cpp hhpred_hmm.cpp hhpred_mat.cpp hhpred_util.cpp 
+

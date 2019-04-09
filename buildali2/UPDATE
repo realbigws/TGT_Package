@@ -1,0 +1,18 @@
+----------------------------
+BuildAli2 v1.05 (2014_05_03)
+----------------------------
+
+1) Provide 'new' and 'old' fashion of BLAST. 
+For the new fashion, the psiblast is applied; while for the old fashion, the blasgpgp is applied.
+
+
+-----------------------------
+BuildAli2 v1.052 (2015_07_30)
+-----------------------------
+
+1) Write a Makefile
+
+2) A minor bug is fixed in file 'source_code/MSA_To_PSSM_cdhit_src/cdhit_util.h',
+line: 84
+this->push_back( item );
+

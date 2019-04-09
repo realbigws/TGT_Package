@@ -1,0 +1,22 @@
+Compile: hh_make
+g++ -static -o hh_make -fno-strict-aliasing -O3 hh_make.cpp hhpred_ali.cpp hhpred_hit.cpp hhpred_hmm.cpp hhpred_mat.cpp hhpred_util.cpp
+
+Compile: hh_filter
+g++ -static -o hh_filter -fno-strict-aliasing -O3 hh_filter.cpp hhpred_ali.cpp hhpred_hit.cpp hhpred_hmm.cpp hhpred_mat.cpp hhpred_util.cpp
+
+[note]:
+we must use -fno-strict-aliasing, since fpow2 is applied.
+
+/////////////////////////////////////////////////////////////////////////////////////
+// fast 2^x
+// ATTENTION: need to compile with g++ -fno-strict-aliasing when using -O2 or -O3!!!
+// Relative deviation < 4.6E-6  (< 2.3E-7 with 5'th order polynomial)
+// Speed: 2.1E-8s (2.3E-8s) per call! (exp(): 8.5E-8, pow(): 1.7E-7)
+// Internal representation of float number according to IEEE 754:
+//   1bit sign, 8 bits exponent, 23 bits mantissa: seee eeee emmm mmmm mmmm mmmm mmmm mmmm
+//                                    0x4b400000 = 0100 1011 0100 0000 0000 0000 0000 0000
+//   In summary: x = (-1)^s * 1.mmmmmmmmmmmmmmmmmmmmmm * 2^(eeeeeee-127)
+/////////////////////////////////////////////////////////////////////////////////////
+ 
+
+

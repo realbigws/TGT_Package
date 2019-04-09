@@ -1,0 +1,15 @@
+To compile BuildAli2, please type: make
+
+[note]:
+we have two versions, 1) old and 2) new
+
+for 1) old,
+1. blasgpgp is applied, 
+2. AlignHits_old is applied (say, CORE and NORMAL are different, with 20 and 50)
+
+for 2) new,
+1. psiblast is applied,
+2. AlignHits_new is applied (say, both CORE and NORMAL are with 50)
+
+For both old and new version, hh_filter (old version) is recommended.
+
