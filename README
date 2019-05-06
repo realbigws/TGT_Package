@@ -88,7 +88,7 @@ mkdir -p databases/
 
 2. download the UniProt20 database from the following link:
 
-http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/uniprot20_2016_02.tgz
+http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/old-releases/uniprot20_2016_02.tgz
 
 uncompressed it, and move all files to databases/
 
