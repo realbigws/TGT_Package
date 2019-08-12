@@ -156,7 +156,7 @@ home=`readlink -f $home`
 # ------ check input fasta ------#
 if [ ! -s "$input_fasta" ]
 then
-	 echo "input_fasta $input_fasta not found !!" >&2
+	echo "input_fasta $input_fasta not found !!" >&2
 	exit 1
 fi
 input_fasta=`readlink -f $input_fasta`
