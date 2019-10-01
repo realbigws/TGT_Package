@@ -282,6 +282,8 @@ then
 				echo "failed in $HHSUITE/BuildAli2 -i $out_root/$seq_file -o $out_root/$relnam.a3m -d $home/databases/$uniprot20/nr90"
 				exit 1
 			fi
+			#-> replace QUERY with relnam
+			sed -i "1 s/^>QUERY/>$relnam/" $out_root/$relnam.a3m
 			echo "BuildAli2 done"
 		fi
 	fi
