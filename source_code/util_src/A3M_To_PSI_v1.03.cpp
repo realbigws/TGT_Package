@@ -66,11 +66,23 @@ int getLowerCase(string &buffer)
 	return count;
 }
 
+//----- trim white space -----//
+int Trim_White_Space(string &in)
+{
+	int count=0;
+	string out="";
+	for(int i=0;i<(int)in.length();i++)
+	if(in[i]!=' ')out+=in[i],count++;
+	in=out;
+	return count;
+}
+
+
 
 //-------- read in MSA in a3m format (i.e., normal FASTA with upper/lower) ------------//
 //[note]: we set the first sequence as the query sequence,
 //        that is to say, all the following sequences should be longer than the first
-int WS_Multi_FASTA_Input(string &multi_fasta,vector <string> &nam_list,vector <string> &fasta_list)
+int Multi_FASTA_Input(string &multi_fasta,vector <string> &nam_list,vector <string> &fasta_list)
 {
 	ifstream fin;
 	string buf,temp;
@@ -110,6 +122,7 @@ int WS_Multi_FASTA_Input(string &multi_fasta,vector <string> &nam_list,vector <s
 				}
 				else
 				{
+					Trim_White_Space(seq);
 					int lowlen=getLowerCase(seq);
 					int curlen=(int)seq.length()-lowlen;
 					if(curlen!=firstlen)
@@ -138,6 +151,7 @@ int WS_Multi_FASTA_Input(string &multi_fasta,vector <string> &nam_list,vector <s
 		}
 		else
 		{
+			Trim_White_Space(seq);
 			int lowlen=getLowerCase(seq);
 			int curlen=(int)seq.length()-lowlen;
 			if(curlen!=firstlen)
@@ -170,7 +184,7 @@ void Eliminate_LowerCase(string &instr,string &outstr)
 
 
 //========= validate sequence ==========//
-int Ori_AA_Map_WS[26]=
+int Ori_AA_Map[26]=
 { 0,20,2,3,4,5,6,7,8,20,10,11,12,13,20,15,16,17,18,19,20, 1, 9,20,14,20};
 // A B C D E F G H I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W  X  Y  Z
 // 0 1 2 3 4 5 6 7 8  9 10 11 12 14 14 15 16 17 18 19 20 21 22 23 24 25
@@ -189,7 +203,7 @@ void Validate_Sequence(string &instr,string &outstr)
 			outstr[i]='X';
 			continue;
 		}
-		int retv=Ori_AA_Map_WS[a-'A'];
+		int retv=Ori_AA_Map[a-'A'];
 		if(retv==20)
 		{
 			outstr[i]='X';
@@ -201,11 +215,11 @@ void Validate_Sequence(string &instr,string &outstr)
 //-------- main -------//
 int main(int argc,char **argv)
 {
-	//------ BLAST_To_A2M -------//
+	//------ A3M_To_PSI -------//
 	{
 		if(argc<3)
 		{
-			fprintf(stderr,"Version: 1.01 \n");
+			fprintf(stderr,"Version: 1.03 \n");
 			fprintf(stderr,"A3M_To_PSI <a3m_input> <psi_output> \n");
 			exit(-1);
 		}
@@ -213,7 +227,7 @@ int main(int argc,char **argv)
 		string psi_output=argv[2];
 		vector <string> nam_list;
 		vector <string> fasta_list;
-		int totnum=WS_Multi_FASTA_Input(a3m_input,nam_list,fasta_list);
+		int totnum=Multi_FASTA_Input(a3m_input,nam_list,fasta_list);
 		if(totnum<=0)exit(-1);
 		//output
 		FILE *fp=fopen(psi_output.c_str(),"wb");
@@ -227,11 +241,21 @@ int main(int argc,char **argv)
 			else
 			{
 				string blank;
-				for(int k=0;k<31-namlen;k++)
-				{
-					blank.push_back(' ');
-				}
+				for(int k=0;k<31-namlen;k++)blank.push_back(' ');
 				name=name_tmp+blank;
+			}
+			//mod blank
+			{
+				int termi=(int)name.length()-1;
+				for(int k=(int)name.length()-1;k>=0;k--)
+				{
+					if(name[k]!=' ')break;
+					termi--;
+				}
+				for(int k=0;k<=termi;k++)
+				{
+					if(name[k]==' ')name[k]='|';
+				}
 			}
 			//get sequence
 			string seq;
@@ -242,6 +266,8 @@ int main(int argc,char **argv)
 			fprintf(fp,"%s  %s\n",name.c_str(),outseq.c_str());
 		}
 		fclose(fp);
+		//exit
 		exit(0);
 	}
 }
+
