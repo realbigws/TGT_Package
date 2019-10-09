@@ -1,9 +1,6 @@
 Compile: AlignHits
 g++ AlignHits_v1.01.cpp getopt.cpp -O3 -static -o AlignHits
 
-Compile: A3M_To_PSI
-g++ A3M_To_PSI_v1.01.cpp -O3 -static -o A3M_To_PSI
-
 Compile: BLAST_To_A3M
 g++ BLAST_To_A3M_v1.03.cpp -O3 -static -o BLAST_To_A3M
 
