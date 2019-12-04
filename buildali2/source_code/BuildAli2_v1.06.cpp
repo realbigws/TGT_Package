@@ -158,7 +158,7 @@ int Read_FASTA_SEQRES(string &infile,string &seqres,int skip=1) //->from .fasta 
 
 // main part for PSI-BLAST search  -- added by Sheng Wang at 2014.02.01
 // [note]: default BLAST e-value threshold should be 0.001
-int BuildAli2_Main(int max_iter,double evalue,int cpu_num,
+int BuildAli2_Main(int max_iter,string &evalue,int cpu_num,
 	string &nr90_root,string &nr70_root,
 	string &query_file,string &out_dir,string &util_dir,int break_or_not)
 {
@@ -214,13 +214,13 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			nr_root=nr90_root;
 			if(NEW_or_OLD==1)
 			{
-				sprintf(command,"%s/psiblast -show_gis -use_sw_tback -num_threads %d -num_alignments %d -num_descriptions 0 -evalue %lf -db %s -query %s -out %s/%s.%d.blast -comp_based_stats 1 1> ws1 2> ws2",
-					util_dir.c_str(),cpu_num,num_alignments,evalue,nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),iter);
+				sprintf(command,"%s/psiblast -show_gis -use_sw_tback -num_threads %d -num_alignments %d -num_descriptions 0 -evalue %s -db %s -query %s -out %s/%s.%d.blast -comp_based_stats 1 1> ws1 2> ws2",
+					util_dir.c_str(),cpu_num,num_alignments,evalue.c_str(),nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),iter);
 			}
 			else
 			{
-				sprintf(command,"%s/BLAST/bin/blastpgp -I T -s T -a %d -b %d -v 0 -e %lf -d %s -i %s -o %s/%s.%d.blast 1> ws1 2> ws2",
-					util_dir.c_str(),cpu_num,num_alignments,evalue,nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),iter);
+				sprintf(command,"%s/BLAST/bin/blastpgp -I T -s T -a %d -b %d -v 0 -e %s -d %s -i %s -o %s/%s.%d.blast 1> ws1 2> ws2",
+					util_dir.c_str(),cpu_num,num_alignments,evalue.c_str(),nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),iter);
 			}
 		}
 		else         //using pssm_file from previous round 
@@ -228,13 +228,13 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			nr_root=nr70_root;
 			if(NEW_or_OLD==1)
 			{
-				sprintf(command,"%s/psiblast -show_gis -use_sw_tback -num_threads %d -num_alignments %d -num_descriptions 0 -evalue %lf -db %s -in_pssm %s/%s.chk -out %s/%s.%d.blast -comp_based_stats 1 1> ws1 2> ws2",
-					util_dir.c_str(),cpu_num,num_alignments,evalue,nr_root.c_str(),out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str(),iter);
+				sprintf(command,"%s/psiblast -show_gis -use_sw_tback -num_threads %d -num_alignments %d -num_descriptions 0 -evalue %s -db %s -in_pssm %s/%s.chk -out %s/%s.%d.blast -comp_based_stats 1 1> ws1 2> ws2",
+					util_dir.c_str(),cpu_num,num_alignments,evalue.c_str(),nr_root.c_str(),out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str(),iter);
 			}
 			else
 			{
-				sprintf(command,"%s/BLAST/bin/blastpgp -I T -s T -a %d -b %d -v 0 -e %lf -d %s -i %s -R %s/%s.chk -q 1 -o %s/%s.%d.blast 1> ws1 2> ws2",
-					util_dir.c_str(),cpu_num,num_alignments,evalue,nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str(),iter);
+				sprintf(command,"%s/BLAST/bin/blastpgp -I T -s T -a %d -b %d -v 0 -e %s -d %s -i %s -R %s/%s.chk -q 1 -o %s/%s.%d.blast 1> ws1 2> ws2",
+					util_dir.c_str(),cpu_num,num_alignments,evalue.c_str(),nr_root.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str(),iter);
 			}
 		}
 		retv=system(command);
@@ -569,7 +569,7 @@ int main(int argc,char **argv)
 		string nr90="databases/NR_new/nr90";
 		string nr70="databases/NR_new/nr70";
 		int max_iter=5;
-		double evalue=0.001;
+		string evalue="0.001";
 		int cpu_num=1;
 		int kill_temp=0;
 		int break_or_not=0;       //default: DON'T break
@@ -601,7 +601,7 @@ int main(int argc,char **argv)
 				max_iter = atoi(optarg);
 				break;
 			case 'e':
-				evalue = atof(optarg);
+				evalue = optarg;
 				break;
 			case 'c':
 				cpu_num = atoi(optarg);
