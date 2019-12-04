@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <math.h>
 #include <iostream>
 #include <fstream>
@@ -360,8 +361,8 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			}
 			else
 			{
-				sprintf(command,"%s/BLAST/bin/blastpgp -d %s/dummydb -i %s -B %s/%s.core_psi -C %s.chk 1> ws1 2> ws2",
-					util_dir.c_str(),util_dir.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),query_name.c_str());
+				sprintf(command,"%s/BLAST/bin/blastpgp -d %s/dummydb -i %s -B %s/%s.core_psi -C %s/%s.chk_tmp 1> ws1 2> ws2",
+					util_dir.c_str(),util_dir.c_str(),query_file.c_str(),out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str());
 			}
 			retv=system(command);
 			if(retv!=0)
@@ -373,17 +374,20 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			//->3.1 blasgpgp process only
 			if(NEW_or_OLD!=1)
 			{
-				sprintf(command,"cp %s %s.seq_makemat; echo %s.chk > %s.pn; echo %s.seq_makemat > %s.sn; %s/BLAST/bin/makemat -P %s; mv %s.mtx %s/%s.core_mtx",
-					query_file.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str(),
-					util_dir.c_str(),query_name.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str());
+				//---- random number generator ------//
+				srand(time(0));
+				int r = rand() % 1000000;
+				sprintf(command,"cp %s %s_%d.seq_makemat; echo %s/%s.chk_tmp > %s_%d.pn; echo %s_%d.seq_makemat > %s_%d.sn; %s/BLAST/bin/makemat -P %s_%d; mv %s_%d.mtx %s/%s.core_mtx",
+					query_file.c_str(),query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r,
+					util_dir.c_str(),query_name.c_str(),r,query_name.c_str(),r,out_dir.c_str(),query_name.c_str());
 				retv=system(command);
 				if(retv!=0)
 				{
 					fprintf(stderr,"seqfile %s failed at MSA_To_PSSM Makemat on %d/%d iteration !! \n",query_file.c_str(),iter,max_iter);
 					return -1;
 				}
-				sprintf(command,"rm -f %s.seq_makemat %s.pn %s.sn %s.chk %s.mn %s.aux ws1 ws2 error.log",
-					query_name.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str(),query_name.c_str());
+				sprintf(command,"rm -f %s_%d.seq_makemat %s_%d.pn %s_%d.sn %s/%s.chk_tmp %s_%d.mn %s_%d.aux ws1 ws2 error.log",
+					query_name.c_str(),r,query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r);
 				retv=system(command);
 			}
 		}
