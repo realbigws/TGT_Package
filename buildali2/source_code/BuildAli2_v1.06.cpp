@@ -376,10 +376,10 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			{
 				//---- random number generator ------//
 				srand(time(0));
-				int r = rand() % 1000000;
-				sprintf(command,"cp %s %s_%d.seq_makemat; echo %s/%s.chk_tmp > %s_%d.pn; echo %s_%d.seq_makemat > %s_%d.sn; %s/BLAST/bin/makemat -P %s_%d; mv %s_%d.mtx %s/%s.core_mtx",
+				int r = rand() % 10000000;
+				sprintf(command,"cp %s %s_%d.seq_makemat; echo %s/%s.chk_tmp > %s_%d.pn; echo %s_%d.seq_makemat > %s_%d.sn; %s/BLAST/bin/makemat -P %s_%d; mv %s/%s.mtx %s/%s.core_mtx",
 					query_file.c_str(),query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r,
-					util_dir.c_str(),query_name.c_str(),r,query_name.c_str(),r,out_dir.c_str(),query_name.c_str());
+					util_dir.c_str(),query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),out_dir.c_str(),query_name.c_str());
 				retv=system(command);
 				if(retv!=0)
 				{
@@ -387,7 +387,7 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 					return -1;
 				}
 				sprintf(command,"rm -f %s_%d.seq_makemat %s_%d.pn %s_%d.sn %s/%s.chk_tmp %s_%d.mn %s_%d.aux ws1 ws2 error.log",
-					query_name.c_str(),r,query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r);
+					query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r);
 				retv=system(command);
 			}
 		}
