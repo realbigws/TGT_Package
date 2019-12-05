@@ -334,9 +334,8 @@ then
 	#-> judge Meff
 	if [ 1 -eq "$(echo "$meff < $addi_meff" | bc)" ]
 	then
-		$home/AddiA3M_Gen.sh -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root
-	else
-		cp $out_root/$relnam.a3m $out_root/$relnam.a3m_orig
+		$home/AddiA3M_Gen.sh -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root/${relnam}_AddiA3M
+		cp $out_root/${relnam}_AddiA3M/$relnam.a3m $out_root
 	fi
 	#-> calculate additional Meff
 	meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
