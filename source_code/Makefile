@@ -5,7 +5,13 @@ SHELL :=/bin/bash
 CXX = g++
 FLAG = -O3
 
-all: tgt util
+all: meff tgt util
+
+
+meff:
+	#---- meff_app ------ #
+	cd Meff_App&&make
+	mv meff_cdhit meff_filter ../util
 
 tgt:
 	# --- A3M_To_TGT ---- #
@@ -18,7 +24,8 @@ util:
 	# ---- util ---- #
 	cd util_src&&make
 	#-> for A3M_To_TGT
-	mv Verify_FASTA A3M_To_PSI SS8_To_SS3 ACC_ReFormat ../util
+	mv Verify_FASTA A3M_To_A2M A3M_To_PSI SS8_To_SS3 ACC_ReFormat ../util
+	mv MSA_To_SEQ A3M_Seq_Refine ../util 
 
 # clean all the temp files
 clean:

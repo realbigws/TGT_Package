@@ -1,0 +1,25 @@
+#------ Meff_CDHIT -------#
+
+Abstract:
+    Calculate Meff value by the aid of CD-HIT
+
+BitBucket:
+    https://bitbucket.org/realbigws/meff_cdhit
+
+Usage:
+    ./meff_cdhit -I example/2n5nA.a2m
+
+
+
+#------ Meff_Filter -------#
+
+Abstract:
+    Filter a MSA by the aid of calculated Meff via sampling
+
+BitBucket:
+    https://bitbucket.org/realbigws/meff_filter
+
+Usage:
+    ./meff_filter -I example/2y5yA.a2m_200k -O sampleout -n 200000 -d 1 -v 1
+
+

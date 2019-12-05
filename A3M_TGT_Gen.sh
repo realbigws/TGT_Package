@@ -4,11 +4,12 @@
 # ----- usage ------ #
 usage()
 {
-	echo "A3M_TGT_Gen v1.07 [Apr-10-2019] "
+	echo "A3M_TGT_Gen v1.08 [Dec-05-2019] "
 	echo "    Generate A3M and TGT file from a given sequence in FASTA format. "
 	echo ""
 	echo "USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-h package] [-d database] [-o out_root] [-c CPU_num] [-m memory] "
-	echo "                         [-n iteration] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] [-H home] "
+	echo "                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] "
+	echo "                         [-A addi_meff] [-V addi_eval] [-D addi_db]  [-H home] "
 	echo "Options:"
 	echo ""
 	echo "***** required arguments *****"
@@ -30,6 +31,9 @@ usage()
 	echo ""
 	echo "-n iteration    : Maximal iteration to run the seleced package. [default = 2] "
 	echo ""
+	echo "-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] "
+	echo "                  -1 indicates that we DON'T perform any filtering "
+	echo ""
 	echo "-e evalue       : E-value cutoff for the selected package. [default = 0.001] "
 	echo ""
 	echo "-E neff         : Neff cutoff for threading purpose (i.e., -C -2). [default = 7] (for hhsuite only) "
@@ -40,6 +44,15 @@ usage()
 	echo ""
 	echo "-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] "
 	echo ""
+	echo "***** additional A3M *********"
+	echo "-A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] "
+	echo "                  -1 indicates that we DON'T search for additional A3M. "
+	echo ""
+	echo "-V addi_eval    : run additional A3M with a given e-value. [default = 0.001] "
+	echo ""
+	echo "-D addi_db      : run additional A3M using a given database. [default = metaclust50] "
+	echo ""
+	echo "***** home relevant **********"
 	echo "-H home         : home directory of TGT_Package."
 	echo "                  [default = `dirname $0`] "
 	echo ""
@@ -78,16 +91,21 @@ cpu_num=4       #-> use 4 CPUs
 memory="3.0"    #-> use 3.0G memory
 #-> package parameters
 iteration=2     #-> default is 2 iterations, for threading purpose
+max_num=-1      #-> default is -1. If set, then run Meff_Filter 
 e_value=0.001   #-> default is 0.001, for threading purpose
 neffmax=7       #-> default is 7, for threading purpose
 coverage=-2     #-> automatic determine the coverage on basis of input sequence length (i.e., for threading)
-#-> others
 kill_tmp=1      #-> default: kill temporary root
+#-> additional a3m
+addi_meff=-1    #-> -1 means that we DON'T search additional a3m
+addi_eval=0.001 #-> default is 0.001
+addi_db=metaclust50           #-> we may pay MORE attention on creating our own meta-genomics database
+#-> home relevant
 home=`dirname $0`  #-> home directory
 
 
 #-> parse arguments
-while getopts ":i:h:d:o:c:m:n:e:E:C:K:H:" opt;
+while getopts ":i:h:d:o:c:m:n:N:e:E:C:K:A:V:D:H:" opt;
 do
 	case $opt in
 	#-> required arguments
@@ -113,6 +131,9 @@ do
 	n)
 		iteration=$OPTARG
 		;;
+	N)
+		max_num=$OPTARG
+		;;
 	e)
 		e_value=$OPTARG
 		;;
@@ -125,6 +146,17 @@ do
 	K)
 		kill_tmp=$OPTARG
 		;;
+	#-> additional a3m
+	A)
+		addi_meff=$OPTARG
+		;;
+	V)
+		addi_eval=$OPTARG
+		;;
+	D)
+		addi_db=$OPTARG
+		;;
+	#-> home relevant
 	H)
 		home=$OPTARG
 		;;
@@ -289,6 +321,41 @@ then
 	fi
 fi
 
+
+
+# ========================================= post process ====================================#
+
+# ---- search for additional a3m ---- #
+if [ $addi_meff -ne -1 ]
+then
+	#-> calculate original Meff
+	meff=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
+	echo "ln(meff) of the original A3M is $meff"
+	#-> judge Meff
+	if [ 1 -eq "$(echo "$meff < $addi_meff" | bc)" ]
+	then
+		$home/AddiA3M_Gen.sh -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root
+	else
+		cp $out_root/$relnam.a3m $out_root/$relnam.a3m_orig
+	fi
+	#-> calculate additional Meff
+	meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
+	echo "ln(meff) of the additional A3M is $meff_addi"
+fi
+
+# ---- filter sequences in MSA --- #
+if [ $max_num -ne -1 ]
+then
+	#-> calculate the number of sequences in A3M
+	numLines=`grep "^>" $out_root/$relnam.a3m | wc | awk '{print $1}'`
+	echo "number of lines in the original A3M is $numLines"
+	#-> judge numLines
+	if [ $numLines -gt $max_num ]
+	then
+		$home/util/meff_filter -i $out_root/$relnam.a3m -o $out_root/$relnam.a3m_filter -n $max_num
+		a3m_file=$relnam.a3m_filter
+	fi
+fi
 
 # ---- generate TGT file ------ #
 tgt_file=$relnam.tgt
