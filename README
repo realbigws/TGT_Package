@@ -1,7 +1,7 @@
-=============================
-Sequence Feature Constructor 
-A3M_TGT_Gen.sh (v1.07)
-=============================
+#=============================
+# Sequence Feature Constructor 
+# A3M_TGT_Gen.sh (v1.07)
+#=============================
 
 Abstract:
 Construct sequence features in TGT format via the search of homology protein sequences for a query sequence in FASTA format.
@@ -16,9 +16,9 @@ realbigws@gmail.com
 
 
 
-============
-Publication:
-============
+#=============
+# Publication:
+#=============
 
 [1]
 RaptorX-Property: a Web Server for Protein Structure Property Prediction
@@ -37,9 +37,9 @@ PredMP: a web server for de novo prediction and visualization of membrane protei
 
 
 
-========
-Install:
-========
+#=========
+# Install:
+#=========
 
 1. download the package
 
@@ -77,9 +77,9 @@ cd ../../
 
 
 
-=========
-Database:
-=========
+#==========
+# Database:
+#==========
 
 1. if databases/ not exist, create it by 
 
@@ -90,22 +90,26 @@ mkdir -p databases/
 
 http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/old-releases/uniprot20_2016_02.tgz
 
-uncompressed it, and move all files to databases/
+uncompressed it, move all files to databases/, and rename these files with prefix 'uniprot20'.
 
 
 3. if other version of UniProt20 (or, UniClust30) is applied, then use '-d uniprot20_XXXX_YY' option in ./A3M_TGT_Gen.sh
+
    for example, the new version UniClust30 could be downloaded from the below link:
        http://wwwuser.gwdg.de/~compbiol/uniclust/2017_10/uniclust30_2017_10_hhsuite.tar.gz
+
+Again, don't forget to rename these files with prefix 'uniclust30'.
 
 
 4. if users want to run other packages, such as jackhmm or buildali2, please install the below databases:
 
 (a) jackhmm :
-    databases/uniref90_2018_06.fasta
+    databases/uniref90.fasta
 
     this database could be downloaded from the following link:
         ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz
-    [note]: you may rename this file (say, uniref90.fasta) with respect to the current date (e.g., uniref90_2018_06.fasta)
+    [note]: you may rename this file (say, uniref90.fasta) with respect to the current date (e.g., uniref90_2018_06.fasta),
+            and them symbol link it to uniref90.fasta
 
 (b) buildali2 :
     databases/nr_databases (must contain nr90 and nr70) 
@@ -124,7 +128,7 @@ A3M_TGT_Gen v1.08 [Dec-05-2019]
     Generate A3M and TGT file from a given sequence in FASTA format. 
 
 USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-h package] [-d database] [-o out_root] [-c CPU_num] [-m memory] 
-                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] 
+                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] [-f force] 
                          [-A addi_meff] [-V addi_eval] [-D addi_db]  [-H home] 
 Options:
 
@@ -135,7 +139,7 @@ Options:
 -h package      : The selected package to generate A3M file. [default = hhsuite2] 
                   users may use other packages: hhsuite3, jackhmm, or buildali2.
 
--d database     : The selected database for sequence search. [default = uniprot20_2016_02] 
+-d database     : The selected database for sequence search. [default = uniprot20] 
                   users may use other uniprot20 databases to run hhsuite2 or hhsuite3,
                   or use uniref90 for jackhmm, and nr_databases for buildali2.
 
@@ -160,6 +164,8 @@ Options:
 
 -K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] 
 
+-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] 
+
 ***** additional A3M *********
 -A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] 
                   -1 indicates that we DON'T search for additional A3M. 
@@ -174,7 +180,6 @@ Options:
 
 
 
-
 ================
 Running example:
 ================
@@ -183,10 +188,10 @@ Running example:
 #-------------- part I: generate A3M without filtering and metagenomics ------------------#
 
 #-> 1. by default, we run HHblits to generate A3M
-./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -d uniprot20_2016_02
+./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -d uniprot20
 
 #-> 2. we may also use JackHMM to produce A3M
-./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h jackhmm -d uniref90_2018_06 -n 3
+./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h jackhmm -d uniref90 -n 3
 
 #-> 3. for legacy purpose, we allow BLAST wrapped in BuildAli2
 ./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h buildali2 -d nr_databases -n 5

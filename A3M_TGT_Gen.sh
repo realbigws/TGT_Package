@@ -8,7 +8,7 @@ usage()
 	echo "    Generate A3M and TGT file from a given sequence in FASTA format. "
 	echo ""
 	echo "USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-h package] [-d database] [-o out_root] [-c CPU_num] [-m memory] "
-	echo "                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] "
+	echo "                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] [-f force] "
 	echo "                         [-A addi_meff] [-V addi_eval] [-D addi_db]  [-H home] "
 	echo "Options:"
 	echo ""
@@ -43,6 +43,8 @@ usage()
 	echo "                  if set to any other positive value, then use this -cov in HHblits. "
 	echo ""
 	echo "-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] "
+	echo ""
+	echo "-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] "
 	echo ""
 	echo "***** additional A3M *********"
 	echo "-A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] "
@@ -82,30 +84,33 @@ fi
 # ----- get arguments ----- #
 #-> required arguments
 query_seq=""
-
 #-> optional arguments
-hhsuite=hhsuite2              #-> can be hhsuite2, hhsuite3, jackhmm, and buildali2
-uniprot20=uniclust30          #-> can be uniprot20, uniclust30, uniref90, and NR_New
+#--| misc parameters
 out_root=""     #-> output to current directory
 cpu_num=4       #-> use 4 CPUs
 memory="3.0"    #-> use 3.0G memory
-#-> package parameters
+#--| search engine and database
+hhsuite=hhsuite2              #-> can be hhsuite2, hhsuite3, jackhmm, and buildali2
+uniprot20=uniprot20           #-> can be uniprot20, uniclust30, uniref90, and NR_New
+#--| search strategies
 iteration=2     #-> default is 2 iterations, for threading purpose
 max_num=-1      #-> default is -1. If set, then run Meff_Filter 
 e_value=0.001   #-> default is 0.001, for threading purpose
 neffmax=7       #-> default is 7, for threading purpose
 coverage=-2     #-> automatic determine the coverage on basis of input sequence length (i.e., for threading)
+#--| others
 kill_tmp=1      #-> default: kill temporary root
-#-> additional a3m
+force=0         #-> default: NOT force overwrite
+#--| additional a3m
 addi_meff=-1    #-> -1 means that we DON'T search additional a3m
 addi_eval=0.001 #-> default is 0.001
 addi_db=metaclust50           #-> we may pay MORE attention on creating our own meta-genomics database
-#-> home relevant
+#--| home relevant
 home=`dirname $0`  #-> home directory
 
 
 #-> parse arguments
-while getopts ":i:h:d:o:c:m:n:N:e:E:C:K:A:V:D:H:" opt;
+while getopts ":i:o:c:m:h:d:n:N:e:E:C:K:f:A:V:D:H:" opt;
 do
 	case $opt in
 	#-> required arguments
@@ -113,12 +118,7 @@ do
 		input_fasta=$OPTARG
 		;;
 	#-> optional arguments
-	h)
-		hhsuite=$OPTARG
-		;;
-	d)
-		uniprot20=$OPTARG
-		;;
+	#--| misc parameters
 	o)
 		out_root=$OPTARG
 		;;
@@ -128,6 +128,14 @@ do
 	m)
 		memory=$OPTARG
 		;;
+	#--| search engine and database
+	h)
+		hhsuite=$OPTARG
+		;;
+	d)
+		uniprot20=$OPTARG
+		;;
+	#--| search strategies
 	n)
 		iteration=$OPTARG
 		;;
@@ -143,8 +151,12 @@ do
 	C)
 		coverage=$OPTARG
 		;;
+	#--| others
 	K)
 		kill_tmp=$OPTARG
+		;;
+	f)
+		force=$OPTARG
 		;;
 	#-> additional a3m
 	A)
@@ -243,7 +255,7 @@ fi
 
 # ---- generate A3M file -------- #
 a3m_file=$relnam.a3m
-if [ ! -f "$out_root/$a3m_file" ]
+if [ ! -f "$out_root/$a3m_file" ] || [ $force -eq 1 ] 
 then
 	#---- this is the default home ----#
 	HHSUITE=$home/$hhsuite
@@ -358,7 +370,7 @@ fi
 
 # ---- generate TGT file ------ #
 tgt_file=$relnam.tgt
-if [ ! -f "$out_root/$tgt_file" ]
+if [ ! -f "$out_root/$tgt_file" ] || [ $force -eq 1 ]
 then
 	$home/A3M_To_TGT -i $out_root/$seq_file -I $out_root/$a3m_file -o $out_root/$tgt_file -t $tmp_root -H $home 
 	OUT=$?
