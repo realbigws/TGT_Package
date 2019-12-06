@@ -4,18 +4,26 @@
 # ----- usage ------ #
 usage()
 {
-	echo "A3M_TGT_Gen v1.08 [Dec-05-2019] "
+	echo "A3M_TGT_Gen v1.00 [Dec-06-2019] "
 	echo "    Generate A3M and TGT file from a given sequence in FASTA format. "
 	echo ""
-	echo "USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-h package] [-d database] [-o out_root] [-c CPU_num] [-m memory] "
-	echo "                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] [-f force] "
-	echo "                         [-A addi_meff] [-V addi_eval] [-D addi_db]  [-H home] "
+	echo "USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-o out_root] [-c CPU_num] [-m memory] [-h package] [-d database] "
+	echo "                         [-n iteration] [-e evalue] [-E neff] [-C coverage] [-N max_num] [-M min_cut] "
+	echo "                         [-A addi_meff] [-V addi_eval] [-D addi_db] [-K remove_tmp] [-f force] [-H home] "
 	echo "Options:"
 	echo ""
 	echo "***** required arguments *****"
 	echo "-i input_fasta  : Query protein sequence in FASTA format. "
 	echo ""
 	echo "***** optional arguments *****"
+	echo "#--| misc parameters"
+	echo "-o out_root     : Default output would the current directory. [default = './\${input_name}_A3MTGT'] "
+	echo ""
+	echo "-c CPU_num      : Number of processors. [default = 4] "
+	echo ""
+	echo "-m memory       : Maximal allowed memory (for hhsuite2 or hhsuite3 only). [default = 3.0 (G)] "
+	echo ""
+	echo "#--| search engine and database"
 	echo "-h package      : The selected package to generate A3M file. [default = hhsuite2] "
 	echo "                  users may use other packages: hhsuite3, jackhmm, or buildali2."
 	echo ""
@@ -23,16 +31,8 @@ usage()
 	echo "                  users may use other uniprot20 databases to run hhsuite2 or hhsuite3,"
 	echo "                  or use uniref90 for jackhmm, and nr_databases for buildali2."
 	echo ""
-	echo "-o out_root     : Default output would the current directory. [default = './\${input_name}_A3MTGT'] "
-	echo ""
-	echo "-c CPU_num      : Number of processors. [default = 4] "
-	echo ""
-	echo "-m memory       : Maximal allowed memory (for hhsuite2 or hhsuite3 only). [default = 3.0 (G)] "
-	echo ""
+	echo "#--| search strategy"
 	echo "-n iteration    : Maximal iteration to run the seleced package. [default = 2] "
-	echo ""
-	echo "-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] "
-	echo "                  -1 indicates that we DON'T perform any filtering "
 	echo ""
 	echo "-e evalue       : E-value cutoff for the selected package. [default = 0.001] "
 	echo ""
@@ -42,17 +42,25 @@ usage()
 	echo "                  if set to -1, then automatically determine coverage value. "
 	echo "                  if set to any other positive value, then use this -cov in HHblits. "
 	echo ""
-	echo "-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] "
+	echo "#--| filter strategy"
+	echo "-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] "
+	echo "                  -1 indicates that we DON'T perform any filtering "
 	echo ""
-	echo "-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] "
+	echo "-M min_cut      : Minimal coverage of sequences in the generated MSA. [default = -1] "
+	echo "                  -1 indicates that we DON'T perform any filtering. Please set from 50 to 70. "
 	echo ""
-	echo "***** additional A3M *********"
+	echo "#--| additional A3M"
 	echo "-A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] "
 	echo "                  -1 indicates that we DON'T search for additional A3M. "
 	echo ""
 	echo "-V addi_eval    : run additional A3M with a given e-value. [default = 0.001] "
 	echo ""
 	echo "-D addi_db      : run additional A3M using a given database. [default = metaclust50] "
+	echo ""
+        echo "#--| other options"
+	echo "-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] "
+	echo ""
+	echo "-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] "
 	echo ""
 	echo "***** home relevant **********"
 	echo "-H home         : home directory of TGT_Package."
@@ -94,23 +102,25 @@ hhsuite=hhsuite2              #-> can be hhsuite2, hhsuite3, jackhmm, and builda
 uniprot20=uniprot20           #-> can be uniprot20, uniclust30, uniref90, and NR_New
 #--| search strategies
 iteration=2     #-> default is 2 iterations, for threading purpose
-max_num=-1      #-> default is -1. If set, then run Meff_Filter 
 e_value=0.001   #-> default is 0.001, for threading purpose
 neffmax=7       #-> default is 7, for threading purpose
 coverage=-2     #-> automatic determine the coverage on basis of input sequence length (i.e., for threading)
-#--| others
-kill_tmp=1      #-> default: kill temporary root
-force=0         #-> default: NOT force overwrite
+#--| filter strategies
+max_num=-1      #-> default is -1. If set, then run Meff_Filter
+min_cut=-1      #-> default is -1. If set, then run Cov_Filter
 #--| additional a3m
 addi_meff=-1    #-> -1 means that we DON'T search additional a3m
 addi_eval=0.001 #-> default is 0.001
-addi_db=metaclust50           #-> we may pay MORE attention on creating our own meta-genomics database
+addi_db=metaclust50           #-> can be ANY sequence database in plain text format
+#--| other options
+kill_tmp=1      #-> default: kill temporary root
+force=0         #-> default: NOT force overwrite
 #--| home relevant
 home=`dirname $0`  #-> home directory
 
 
 #-> parse arguments
-while getopts ":i:o:c:m:h:d:n:N:e:E:C:K:f:A:V:D:H:" opt;
+while getopts ":i:o:c:m:h:d:n:e:E:C:N:M:A:V:D:K:f:H:" opt;
 do
 	case $opt in
 	#-> required arguments
@@ -139,9 +149,6 @@ do
 	n)
 		iteration=$OPTARG
 		;;
-	N)
-		max_num=$OPTARG
-		;;
 	e)
 		e_value=$OPTARG
 		;;
@@ -151,14 +158,14 @@ do
 	C)
 		coverage=$OPTARG
 		;;
-	#--| others
-	K)
-		kill_tmp=$OPTARG
+	#--| filter strategies
+	M)
+		max_num=$OPTARG
 		;;
-	f)
-		force=$OPTARG
+	N)
+		min_cut=$OPTARG
 		;;
-	#-> additional a3m
+	#--| additional a3m
 	A)
 		addi_meff=$OPTARG
 		;;
@@ -167,6 +174,13 @@ do
 		;;
 	D)
 		addi_db=$OPTARG
+		;;
+	#--| others options
+	K)
+		kill_tmp=$OPTARG
+		;;
+	f)
+		force=$OPTARG
 		;;
 	#-> home relevant
 	H)
@@ -346,15 +360,31 @@ then
 	#-> judge Meff
 	if [ 1 -eq "$(echo "$meff < $addi_meff" | bc)" ]
 	then
+		#--| additional a3m
 		$home/AddiA3M_Gen.sh -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root/${relnam}_AddiA3M
 		cp $out_root/${relnam}_AddiA3M/$relnam.a3m $out_root
+		#--| more Meff
+		meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
+		echo "ln(meff) of the additional A3M is $meff_addi"
 	fi
-	#-> calculate additional Meff
-	meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
-	echo "ln(meff) of the additional A3M is $meff_addi"
 fi
 
+
 # ---- filter sequences in MSA --- #
+#-> coverage filter
+if [ $min_cut -ne -1 ]
+then
+	#-> calculate the number of sequences in A3M
+	numLines=`grep "^>" $out_root/$relnam.a3m | wc | awk '{print $1}'`
+	echo "number of lines in the original A3M before CovFilt is $numLines"
+	#-> coverage filter
+	cp $out_root/$relnam.a3m $out_root/$relnam.a3m_prev
+	$home/util/MSA_CovFilter $out_root/$relnam.a3m_prev $out_root/$relnam.a3m $min_cut
+	#-> calculate the number of sequences in A3M
+	numLines=`grep "^>" $out_root/$relnam.a3m | wc | awk '{print $1}'`
+	echo "number of lines in the cov_filt A3M before CovFilt is $numLines"
+fi
+#-> maximal number filter
 if [ $max_num -ne -1 ]
 then
 	#-> calculate the number of sequences in A3M
@@ -363,8 +393,12 @@ then
 	#-> judge numLines
 	if [ $numLines -gt $max_num ]
 	then
+		#--| filter
 		$home/util/meff_filter -i $out_root/$relnam.a3m -o $out_root/$relnam.a3m_filter -n $max_num
 		a3m_file=$relnam.a3m_filter
+		#--| filter result
+		numLines=`grep "^>" $out_root/$a3m_file | wc | awk '{print $1}'`
+		echo "number of lines in the filtered A3M is $numLines"
 	fi
 fi
 

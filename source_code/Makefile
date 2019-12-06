@@ -25,7 +25,7 @@ util:
 	cd util_src&&make
 	#-> for A3M_To_TGT
 	mv Verify_FASTA A3M_To_A2M A3M_To_PSI SS8_To_SS3 ACC_ReFormat ../util
-	mv MSA_To_SEQ A3M_Seq_Refine ../util 
+	mv MSA_To_SEQ A3M_Seq_Refine MSA_CovFilter ../util 
 
 # clean all the temp files
 clean:

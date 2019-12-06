@@ -16,9 +16,10 @@ all:
 	# ------ A3M addi ---------#
 	$(CXX) MSA_To_SEQ.cpp $(FLAG) -o MSA_To_SEQ
 	$(CXX) A3M_Seq_Refine.cpp $(FLAG) -o A3M_Seq_Refine
+	$(CXX) MSA_CovFilter.cpp $(FLAG) -o MSA_CovFilter
 	# move to ../ directory
 	mv Verify_FASTA A3M_To_A2M A3M_To_PSI SS8_To_SS3 ACC_ReFormat ../
-	mv MSA_To_SEQ A3M_Seq_Refine ../
+	mv MSA_To_SEQ A3M_Seq_Refine MSA_CovFilter ../
 
 # clean all the temp files
 clean:
