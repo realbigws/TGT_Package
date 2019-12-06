@@ -8,7 +8,7 @@ usage()
 	echo "    Generate A3M and TGT file from a given sequence in FASTA format. "
 	echo ""
 	echo "USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-o out_root] [-c CPU_num] [-m memory] [-h package] [-d database] "
-	echo "                         [-n iteration] [-e evalue] [-E neff] [-C coverage] [-N max_num] [-M min_cut] "
+	echo "                         [-n iteration] [-e evalue] [-E neff] [-C coverage] [-M min_cut] [-N max_num] "
 	echo "                         [-A addi_meff] [-V addi_eval] [-D addi_db] [-K remove_tmp] [-f force] [-H home] "
 	echo "Options:"
 	echo ""
@@ -43,11 +43,11 @@ usage()
 	echo "                  if set to any other positive value, then use this -cov in HHblits. "
 	echo ""
 	echo "#--| filter strategy"
-	echo "-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] "
-	echo "                  -1 indicates that we DON'T perform any filtering "
-	echo ""
 	echo "-M min_cut      : Minimal coverage of sequences in the generated MSA. [default = -1] "
 	echo "                  -1 indicates that we DON'T perform any filtering. Please set from 50 to 70. "
+	echo ""
+	echo "-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] "
+	echo "                  -1 indicates that we DON'T perform any filtering. For example, set 20000 here. "
 	echo ""
 	echo "#--| additional A3M"
 	echo "-A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] "
@@ -106,8 +106,8 @@ e_value=0.001   #-> default is 0.001, for threading purpose
 neffmax=7       #-> default is 7, for threading purpose
 coverage=-2     #-> automatic determine the coverage on basis of input sequence length (i.e., for threading)
 #--| filter strategies
-max_num=-1      #-> default is -1. If set, then run Meff_Filter
 min_cut=-1      #-> default is -1. If set, then run Cov_Filter
+max_num=-1      #-> default is -1. If set, then run Meff_Filter
 #--| additional a3m
 addi_meff=-1    #-> -1 means that we DON'T search additional a3m
 addi_eval=0.001 #-> default is 0.001
@@ -120,7 +120,7 @@ home=`dirname $0`  #-> home directory
 
 
 #-> parse arguments
-while getopts ":i:o:c:m:h:d:n:e:E:C:N:M:A:V:D:K:f:H:" opt;
+while getopts ":i:o:c:m:h:d:n:e:E:C:M:N:A:V:D:K:f:H:" opt;
 do
 	case $opt in
 	#-> required arguments
@@ -160,10 +160,10 @@ do
 		;;
 	#--| filter strategies
 	M)
-		max_num=$OPTARG
+		min_cut=$OPTARG
 		;;
 	N)
-		min_cut=$OPTARG
+		max_num=$OPTARG
 		;;
 	#--| additional a3m
 	A)
