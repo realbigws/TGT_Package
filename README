@@ -98,7 +98,7 @@ uncompressed it, move all files to databases/, and rename these files with prefi
    for example, the new version UniClust30 could be downloaded from the below link:
        http://wwwuser.gwdg.de/~compbiol/uniclust/2017_10/uniclust30_2017_10_hhsuite.tar.gz
 
-Again, don't forget to rename these files with prefix 'uniclust30'.
+Again, you may rename these files with prefix 'uniclust30'.
 
 
 4. if users want to run other packages, such as jackhmm or buildali2, please install the below databases:
