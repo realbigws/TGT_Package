@@ -374,8 +374,11 @@ printf("%s -> iter %d/%d \n",query_name.c_str(),iter,max_iter);
 			//->3.1 blasgpgp process only
 			if(NEW_or_OLD!=1)
 			{
+				//---- get microsecond of the system ---//
+				struct timespec spec;
+				clock_gettime(CLOCK_MONOTONIC, &spec);
 				//---- random number generator ------//
-				srand(time(0));
+				srand(time(0)+spec.tv_nsec);
 				int r = rand() % 10000000;
 				sprintf(command,"cp %s %s_%d.seq_makemat; echo %s/%s.chk_tmp > %s_%d.pn; echo %s_%d.seq_makemat > %s_%d.sn; %s/BLAST/bin/makemat -P %s_%d; mv %s/%s.mtx %s/%s.core_mtx",
 					query_file.c_str(),query_name.c_str(),r,out_dir.c_str(),query_name.c_str(),query_name.c_str(),r,query_name.c_str(),r,query_name.c_str(),r,
@@ -669,13 +672,13 @@ int main(int argc,char **argv)
 		//final hh_filter
 		if(NEW_or_OLD==1)
 		{
-			sprintf(command,"%s/hh_filter_old -i %s/%s.a3m -o %s",
-				util_root.c_str(),tmp_root.c_str(),query_name.c_str(),a3m_out.c_str());
+			sprintf(command,"%s/hh_filter.sh %s/%s.a3m %s %s 0",
+				util_root.c_str(),tmp_root.c_str(),query_name.c_str(),a3m_out.c_str(),util_root.c_str());
 		}
 		else
 		{
-			sprintf(command,"%s/hh_filter_old -i %s/%s.a3m -o %s",
-				util_root.c_str(),tmp_root.c_str(),query_name.c_str(),a3m_out.c_str());
+			sprintf(command,"%s/hh_filter.sh %s/%s.a3m %s %s 0",
+				util_root.c_str(),tmp_root.c_str(),query_name.c_str(),a3m_out.c_str(),util_root.c_str());
 		}
 		retv=system(command);
 		if(retv!=0)
@@ -697,13 +700,13 @@ int main(int argc,char **argv)
 			{
 				if(NEW_or_OLD==1)
 				{
-					sprintf(command,"%s/hh_filter_old -i %s/%s.a3m.%d -o %s.%d",
-						util_root.c_str(),tmp_root.c_str(),query_name.c_str(),i,a3m_out.c_str(),i);
+					sprintf(command,"%s/hh_filter.sh %s/%s.a3m.%d %s.%d %s 0",
+						util_root.c_str(),tmp_root.c_str(),query_name.c_str(),i,a3m_out.c_str(),i,util_root.c_str());
 				}
 				else
 				{
-					sprintf(command,"%s/hh_filter_old -i %s/%s.a3m.%d -o %s.%d",
-						util_root.c_str(),tmp_root.c_str(),query_name.c_str(),i,a3m_out.c_str(),i);
+					sprintf(command,"%s/hh_filter.sh %s/%s.a3m.%d %s.%d %s 0",
+						util_root.c_str(),tmp_root.c_str(),query_name.c_str(),i,a3m_out.c_str(),i,util_root.c_str());
 				}
 				retv=system(command);
 				if(retv!=0)

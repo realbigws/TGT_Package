@@ -265,7 +265,8 @@ int CD_HIT_Process_New(
 	vector <string> &out_nam,                           //-> input, OriginID/Range
 	vector <string> &out_seq,                           //-> input, ungapped fragments
 	double sim_thres,double len_thres,
-	vector <vector <string> > & output, vector <int> & center )
+	vector <vector <string> > & output, vector <int> & center,
+	int cpu_num)
 {
 	//-> 0. run CD-HIT
 //	int sys_retv;
@@ -283,7 +284,12 @@ int CD_HIT_Process_New(
 	options.des_len=0;               // -d 0
 #ifndef NO_OPENMP
 	int cpu = omp_get_num_procs();   // -T 0
-	options.threads = cpu;
+	if(cpu_num<=0)options.threads = cpu;
+	else
+	{
+		int rel_cpu=cpu_num<cpu?cpu_num:cpu;
+		options.threads = rel_cpu;
+	}
 #endif
 	options.Validate();
 	InitNAA( MAX_UAA );
@@ -985,9 +991,9 @@ void BLAST_MTX_Output(FILE *fp,string &query,           //-> input, query length
 //---------- usage ---------//
 void Usage() 
 {
-	fprintf(stderr,"Version: 1.05 \n");
+	fprintf(stderr,"Version: 1.06 \n");
 	fprintf(stderr,"MSA_To_PSSM -i psi_input [-l block_len] [-o pssm_out] [-m mtx_out]  \n");
-	fprintf(stderr,"          [-t chk_out_new] [-T chk_out_old] [-c cut_num] \n\n");
+	fprintf(stderr,"          [-t chk_out_new] [-T chk_out_old] [-c cut_num] [-C cpu_num] \n\n");
 	fprintf(stderr,"Usage : \n\n");
 	fprintf(stderr,"-i psi_input :         Input MSA file in PSI format. \n\n");
 	fprintf(stderr,"-l block_len :         Block length for blasgpgp operation. \n");
@@ -1000,6 +1006,7 @@ void Usage()
 	fprintf(stderr,"                       then cdhit will be applied during purge. \n");
 	fprintf(stderr,"                       (by default, cdhit won't be called.) \n");
 	fprintf(stderr,"                       [if set, please use -c 20] \n\n");
+	fprintf(stderr,"-C cpu_num :           CPU number. [default = -1 to use ALL] \n\n");
 }
 
 //-------- main -------//
@@ -1022,11 +1029,12 @@ int main(int argc,char **argv)
 		int chk_key=0;
 		int mtx_key=0;
 		int cut_num=0;
+		int cpu_num=-1;
 
 		//command-line arguments process
 		extern char* optarg;
 		char c = 0;
-		while ((c = getopt(argc, argv, "i:l:o:m:t:T:c:")) != EOF) {
+		while ((c = getopt(argc, argv, "i:l:o:m:t:T:c:C:")) != EOF) {
 			switch (c) {
 			case 'i':
 				psi_input = optarg;
@@ -1053,6 +1061,9 @@ int main(int argc,char **argv)
 			case 'c':
 				cut_num = atoi(optarg);
 				CDHIT_or_NOT = 1;
+				break;
+			case 'C':
+				cpu_num = atoi(optarg);
 				break;
 			default:
 				Usage();
@@ -1122,7 +1133,7 @@ if(retv<cut_num)CDHIT_or_NOT=0;
 			vector <vector <string> > purge_string;
 			vector <int> purge_center;
 			retv=CD_HIT_Process_New(Frag_nam,Frag_seq,sim_threshold,len_threshold,
-				purge_string,purge_center);
+				purge_string,purge_center,cpu_num);
 			if(retv>0)CD_HIT_Purge(MSA_fin_,purge_string,purge_center,sim_threshold);
 
 			//-> 3. Get final MSA

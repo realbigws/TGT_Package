@@ -388,7 +388,8 @@ int CD_HIT_Process_New(
 	vector <string> &out_nam,                           //-> input, OriginID/Range
 	vector <string> &out_seq,                           //-> input, ungapped fragments
 	double sim_thres,double len_thres,
-	vector <vector <string> > & output, vector <int> & center )
+	vector <vector <string> > & output, vector <int> & center,
+	int cpu_num)
 {
 	//-> 0. run CD-HIT
 //	int sys_retv;
@@ -404,10 +405,17 @@ int CD_HIT_Process_New(
 	options.diff_cutoff=len_thres;   // -s len_thres
 	options.max_memory=0;            // -M 0
 	options.des_len=0;               // -d 0
+
 #ifndef NO_OPENMP
 	int cpu = omp_get_num_procs();   // -T 0
-	options.threads = cpu;
+	if(cpu_num<=0)options.threads = cpu;
+	else
+	{
+		int rel_cpu=cpu_num<cpu?cpu_num:cpu;
+		options.threads = rel_cpu;
+	}
 #endif
+
 	options.Validate();
 	InitNAA( MAX_UAA );
 	options.NAAN = NAAN_array[options.NAA];
@@ -493,8 +501,9 @@ double compute_coverage(const string &in)
 //---------- usage ---------//
 void Usage() 
 {
-	fprintf(stderr,"Version: 1.01 \n");
-	fprintf(stderr,"Self_Filter -i/I a3m(a2m)_input -o/O a3m(a2m)_output [-s sim_thres] [-d coverage] [-c cdhit] \n");
+	fprintf(stderr,"Version: 1.02 \n");
+	fprintf(stderr,"Self_Filter -i/I a3m(a2m)_input -o/O a3m(a2m)_output [-s sim_thres] [-d coverage] \n");
+	fprintf(stderr,"             [-c cdhit] [-C cpu_num] \n");
 	fprintf(stderr,"Usage : \n\n");
 	fprintf(stderr,"-i/I aXm_input  : Input MSA file in A3M/A2M format. \n\n");
 	fprintf(stderr,"-o/O aXm_output : Output filterd MSA file in A3M/A2M format. \n\n");
@@ -503,6 +512,7 @@ void Usage()
 	fprintf(stderr,"-d coverage     : Coverage threshold to query sequence. \n");
 	fprintf(stderr,"                  (by default, coverage = 0.5, should between 0.0 to 1.0) \n\n");
 	fprintf(stderr,"-c cdhit        : Run CD-HIT or not to filter the redundant sequences. (default = 0) \n\n");
+	fprintf(stderr,"-C cpu_num      : CPU number. [default = -1 to use ALL] \n\n");
 }
 
 //------------ main ---------------//
@@ -521,11 +531,12 @@ int main(int argc, char *argv[])
 	double sim_thres=0.95;     //-> Similarity threshold to filter other sequences (default: 0.95)
 	double coverage=0.5;       //-> Coverage threshold to filter other sequences (default: 0.5)
 	int cdhit_filter=0;        //-> run cdhit to filter the redundant sequences. (default: 0)
+	int cpu_num=-1;            //-> default is -1 to use ALL cpus.
 
 	//command-line arguments process
 	extern char* optarg;
 	char c = 0;
-	while ((c = getopt(argc, argv, "i:I:o:O:s:d:c:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:I:o:O:s:d:c:C:")) != EOF) {
 		switch (c) {
 		case 'i':
 			axm_input = optarg;
@@ -551,6 +562,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':
 			cdhit_filter = atoi(optarg);
+			break;
+		case 'C':
+			cpu_num = atoi(optarg);
 			break;
 		default:
 			Usage();
@@ -580,6 +594,15 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+#ifndef NO_OPENMP
+	int CPU_NUM = omp_get_num_procs();   // -T 0
+	if(cpu_num<=0)omp_set_num_threads(CPU_NUM);
+	else
+	{
+		int rel_cpu=cpu_num<CPU_NUM?cpu_num:CPU_NUM;
+		omp_set_num_threads(rel_cpu);
+	}
+#endif
 
 	//----- general data structure ---//
 	vector <string> nam_list;
@@ -656,7 +679,7 @@ int main(int argc, char *argv[])
 		vector <vector <string> > strnam;
 		vector <int> center;
 		CD_HIT_Process_New(out_nam,fasta_seq,sim_thres_cdhit,len_thres,
-			strnam,center);
+			strnam,center,cpu_num);
 		//-> cd-hit filter
 		for(int i=0;i<(int)center.size();i++)
 		{

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <vector>
 #include <set>
+#include <algorithm>
 #include <omp.h>
 #include <time.h>
 #include <getopt.h>
@@ -391,7 +392,8 @@ int CD_HIT_Process_New(
 	vector <string> &out_nam,                           //-> input, OriginID/Range
 	vector <string> &out_seq,                           //-> input, ungapped fragments
 	double sim_thres,double len_thres,
-	vector <vector <string> > & output, vector <int> & center )
+	vector <vector <string> > & output, vector <int> & center,
+	int cpu_num)
 {
 	//-> 0. run CD-HIT
 //	int sys_retv;
@@ -407,10 +409,17 @@ int CD_HIT_Process_New(
 	options.diff_cutoff=len_thres;   // -s len_thres
 	options.max_memory=0;            // -M 0
 	options.des_len=0;               // -d 0
+
 #ifndef NO_OPENMP
 	int cpu = omp_get_num_procs();   // -T 0
-	options.threads = cpu;
+	if(cpu_num<=0)options.threads = cpu;
+	else
+	{
+		int rel_cpu=cpu_num<cpu?cpu_num:cpu;
+		options.threads = rel_cpu;
+	}
 #endif
+
 	options.Validate();
 	InitNAA( MAX_UAA );
 	options.NAAN = NAAN_array[options.NAA];
@@ -550,9 +559,9 @@ long binarySearch_iter(vector <double> &arr, long l, long r, double x, long size
 //---------- usage ---------//
 void Usage() 
 {
-	fprintf(stderr,"Version: 1.02 \n");
-	fprintf(stderr,"Meff_Filter -i/I a3m(a2m)_input -o/O a3m(a2m)_output [-s sim_thres] [-c cut_num]  \n");
-	fprintf(stderr,"           [-S cdhit_thres] [-n sample_num] [-d identity] [-v verbose] [-r rand_seed] \n");
+	fprintf(stderr,"Version: 1.03 \n");
+	fprintf(stderr,"Meff_Filter -i/I a3m(a2m)_input -o/O a3m(a2m)_output [-s sim_thres] [-c cut_num] [-C cpu_num] \n");
+	fprintf(stderr,"           [-f first] [-S cdhit_thres] [-n sample_num] [-d identity] [-v verbose] [-r rand_seed] \n");
 	fprintf(stderr,"Usage : \n\n");
 	fprintf(stderr,"-i/I aXm_input :  Input MSA file in A3M/A2M format. \n\n");
 	fprintf(stderr,"-o/O aXm_output : Output filterd MSA file in A3M/A2M format. \n\n");
@@ -560,6 +569,8 @@ void Usage()
 	fprintf(stderr,"                  (by default, sim_thres = 0.7, should between 0.7 to 1.0) \n\n");
 	fprintf(stderr,"-c cut_num :      If seq_num in MSA > cut_num, then call CD-HIT. \n");
 	fprintf(stderr,"                  (by default, cut_num = 20000, set -1 to disable CD-HIT) \n\n");
+	fprintf(stderr,"-C cpu_num :      CPU number. [default = -1 to use ALL] \n\n");
+	fprintf(stderr,"-f first :        Pivot sequence position. [default: 0 (0-base)] \n\n");
 	fprintf(stderr,"-S cdhit_thres :  Similarity threshold to run CD-HIT. \n");
 	fprintf(stderr,"                  (by default, cdhit_thres = 0.65, should between 0.65 to 1.0) \n\n");
 	fprintf(stderr,"-n sample_num :   Sample number to produce a new MSA (default: 20000) \n\n");
@@ -583,17 +594,19 @@ int main(int argc, char *argv[])
 	int axm_output_key=0;
 	double sim_thres=0.7;      //-> Similarity threshold to calculate Meff (default: 0.7)
 	int cut_num=20000;         //-> Sequence cut number to call CD-HIT (default: 20000)
+	int cpu_num=-1;            //-> default is -1 to use ALL cpus.
+	int first_seq=0;           //-> by default, we put the first sequence as the pivot sequence.
 	double cdhit_thres=0.65;   //-> Similarity threshold to run CD-HIT (default: 0.65)
 	int verbose=0;             //-> Verbose CD-HIT stage or not (default: 0)
 	long seed=-1;              //-> -1 for using time(NULL) to generate the seed.
 	//--- for sample purpose --//
-	int sample_num=20000;
+	long sample_num=20000;
 	int identity=0;
 
 	//command-line arguments process
 	extern char* optarg;
 	char c = 0;
-	while ((c = getopt(argc, argv, "i:I:o:O:s:c:S:n:d:v:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:I:o:O:s:c:C:f:S:n:d:v:r:")) != EOF) {
 		switch (c) {
 		case 'i':
 			axm_input = optarg;
@@ -616,6 +629,12 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':
 			cut_num = atoi(optarg);
+			break;
+		case 'C':
+			cpu_num = atoi(optarg);
+			break;
+		case 'f':
+			first_seq = atoi(optarg);
 			break;
 		case 'S':
 			cdhit_thres = atof(optarg);
@@ -660,6 +679,15 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+#ifndef NO_OPENMP
+	int CPU_NUM = omp_get_num_procs();   // -T 0
+	if(cpu_num<=0)omp_set_num_threads(CPU_NUM);
+	else
+	{
+		int rel_cpu=cpu_num<CPU_NUM?cpu_num:CPU_NUM;
+		omp_set_num_threads(rel_cpu);
+	}
+#endif
 
 	//----- general data structure ---//
 	vector <string> nam_list;
@@ -739,7 +767,7 @@ int main(int argc, char *argv[])
 
 if(verbose==1)fprintf(stderr,"cdhit process\n");
 		CD_HIT_Process_New(out_nam,fasta_seq,sim_thres_cdhit,len_thres,
-			strnam,center);
+			strnam,center,cpu_num);
 
 if(verbose==1)fprintf(stderr,"cluster to matrix\n");
 		map<long, int > cluster_mapping;
@@ -838,12 +866,19 @@ if(verbose==1)fprintf(stderr,"start sampling\n");
 
 	//------- prepare for sample -----//
 	mt19937 ws_rand;
-	if(seed<0)ws_rand.init_genrand(time(NULL));
-	else ws_rand.init_genrand(seed);
+	if(seed<0)
+	{
+		ws_rand.init_genrand(time(NULL));
+		srand(time(NULL));
+	}
+	else
+	{
+		ws_rand.init_genrand(seed);
+		srand(seed);
+	}
 
 	//------- sample K sequences -----//
 	set <long> sampled_number;
-	sampled_number.insert(0);
 	for(long i=0;i<sample_num;i++)
 	{
 		double randnum=ws_rand.genrand_real3();
@@ -851,14 +886,55 @@ if(verbose==1)fprintf(stderr,"start sampling\n");
 		sampled_number.insert(retv);		
 	}
 
-	//------- output sampled K sequence -----//
-	FILE *fp=fopen(axm_output.c_str(),"wb");
-	set <long> :: iterator itr;
-	for (itr = sampled_number.begin(); itr != sampled_number.end(); ++itr)
+	//------- collect sampled sequence ----//
+	vector <long> sampled_index (msa_num,0);
+	sampled_index[first_seq]=1;
+	long sampled_num=1;
+	for (set <long> :: iterator itr = sampled_number.begin(); itr != sampled_number.end(); ++itr)
 	{
 		long key = *itr;
-		if(axm_output_key==0)fprintf(fp,">%s\n",nam_list[key].c_str());
-		fprintf(fp,"%s\n",fasta_list_orig[key].c_str());
+		if(sampled_index[key]==0)
+		{
+			sampled_index[key]=1;
+			sampled_num++;
+		}
+	}
+
+	//------- collect unsampled sequence -----//
+	long remain_num1=sample_num-sampled_num;
+	long remain_num2=msa_num-sampled_num;
+	long remain_num=remain_num1<remain_num2?remain_num1:remain_num2;
+	if(remain_num>0)
+	{
+		vector <long> unsampled_index;
+		for(long i=0;i<msa_num;i++)
+		{
+			if(sampled_index[i]==0)unsampled_index.push_back(i);
+		}
+		random_shuffle(unsampled_index.begin(),unsampled_index.end());
+		for(long i=0;i<remain_num;i++)
+		{
+			long index=unsampled_index[i];
+			sampled_index[index]=1;
+			sampled_num++;
+		}
+	}
+	//------- final check ----------//
+	long check_num=msa_num<sample_num?msa_num:sample_num;
+	if(sampled_num != check_num)
+	{
+		fprintf(stderr,"sampled_num %ld not equal to check_num %ld \n",
+			sampled_num,check_num);
+		exit(-1);
+	}
+
+	//------- output sampled K sequence -----//
+	FILE *fp=fopen(axm_output.c_str(),"wb");
+	for(long i=0;i<msa_num;i++)
+	{
+		if(sampled_index[i]==0)continue;
+		if(axm_output_key==0)fprintf(fp,">%s\n",nam_list[i].c_str());
+		fprintf(fp,"%s\n",fasta_list_orig[i].c_str());
 	}
 	fclose(fp);
 

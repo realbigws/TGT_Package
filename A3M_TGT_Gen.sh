@@ -57,7 +57,7 @@ usage()
 	echo ""
 	echo "-D addi_db      : run additional A3M using a given database. [default = metaclust50] "
 	echo ""
-        echo "#--| other options"
+	echo "#--| other options"
 	echo "-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] "
 	echo ""
 	echo "-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] "
@@ -212,22 +212,29 @@ fi
 home=`readlink -f $home`
 
 # ------ check input fasta ------#
+if [ -z "$input_fasta" ]
+then
+	echo "input input_fasta is null !!" >&2
+	exit 1
+fi
 if [ ! -s "$input_fasta" ]
 then
 	echo "input_fasta $input_fasta not found !!" >&2
 	exit 1
 fi
 input_fasta=`readlink -f $input_fasta`
+#-> get query_name
 fulnam=`basename $input_fasta`
 relnam=${fulnam%.*}
 
 # ------ check output directory ------#
 if [ "$out_root" == "" ]
 then
-	out_root=${relnam}_A3MTGT
+	out_root=$curdir/${relnam}_A3MTGT
 fi
 mkdir -p $out_root
 out_root=`readlink -f $out_root`
+
 
 
 
@@ -269,7 +276,7 @@ fi
 
 # ---- generate A3M file -------- #
 a3m_file=$relnam.a3m
-if [ ! -f "$out_root/$a3m_file" ] || [ $force -eq 1 ] 
+if [ ! -s "$out_root/$a3m_file" ] || [ $force -eq 1 ]
 then
 	#---- this is the default home ----#
 	HHSUITE=$home/$hhsuite
@@ -311,17 +318,17 @@ then
 				exit 1
 			fi
 			#-> transform from sto to a3m
-			$HHSUITE/util/reformat.pl $tmp_root/$relnam.sto $tmp_root/$relnam.a3m -M first
+			$home/util/reformat.pl $tmp_root/$relnam.sto $tmp_root/$relnam.a3m -M first
 			OUT=$?
 			if [ $OUT -ne 0 ]
 			then
-				echo "failed in $HHSUITE/util/reformat.pl $tmp_root/$relnam.sto $tmp_root/$relnam.a3m -M first"
+				echo "failed in $home/util/reformat.pl $tmp_root/$relnam.sto $tmp_root/$relnam.a3m -M first"
 				exit 1
 			fi
 			#-> run hhfilter or not
 			if [ $coverage -ne -2 ]
 			then
-				$HHSUITE/util/self_filter -i $tmp_root/$relnam.a3m -o $out_root/$relnam.a3m -s 0.99 -d 0.5
+				$home/util/self_filter -i $tmp_root/$relnam.a3m -o $out_root/$relnam.a3m -s 0.99 -d 0.5
 			else
 				cp $tmp_root/$relnam.a3m $out_root
 			fi
@@ -345,8 +352,10 @@ then
 			echo "BuildAli2 done"
 		fi
 	fi
+	#-> reformat a3m file
+	$home/util/A3M_ReFormat $out_root/$relnam.a3m $out_root/$relnam.a3m_
+	mv $out_root/$relnam.a3m_ $out_root/$relnam.a3m
 fi
-
 
 
 # ========================================= post process ====================================#
@@ -355,17 +364,20 @@ fi
 if [ $addi_meff -ne -1 ]
 then
 	#-> calculate original Meff
-	meff=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
+	meff=`$home/util/meff_cdhit -i $out_root/$relnam.a3m -C $cpu_num`
 	echo "ln(meff) of the original A3M is $meff"
 	#-> judge Meff
 	if [ 1 -eq "$(echo "$meff < $addi_meff" | bc)" ]
 	then
 		#--| additional a3m
-		$home/AddiA3M_Gen.sh -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root/${relnam}_AddiA3M
+		$home/AddiA3M_Gen.sh -c $cpu_num -i $out_root/$seq_file -I $out_root/$relnam.a3m -o $out_root/${relnam}_AddiA3M -d $addi_db -m 1
 		cp $out_root/${relnam}_AddiA3M/$relnam.a3m $out_root
 		#--| more Meff
-		meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m`
+		meff_addi=`$home/util/meff_cdhit -i $out_root/$relnam.a3m -C $cpu_num`
 		echo "ln(meff) of the additional A3M is $meff_addi"
+		#--| reformat a3m file
+		$home/util/A3M_ReFormat $out_root/$relnam.a3m $out_root/$relnam.a3m_
+		mv $out_root/$relnam.a3m_ $out_root/$relnam.a3m
 	fi
 fi
 
@@ -393,20 +405,22 @@ then
 	#-> judge numLines
 	if [ $numLines -gt $max_num ]
 	then
+		#--| copy to prefilter
+		cp $out_root/$relnam.a3m $out_root/$relnam.a3m_prefilt
 		#--| filter
-		$home/util/meff_filter -i $out_root/$relnam.a3m -o $out_root/$relnam.a3m_filter -n $max_num
-		a3m_file=$relnam.a3m_filter
+		$home/util/meff_filter -i $out_root/$relnam.a3m_prefilt -o $out_root/$relnam.a3m -n $max_num -C $cpu_num
 		#--| filter result
 		numLines=`grep "^>" $out_root/$a3m_file | wc | awk '{print $1}'`
 		echo "number of lines in the filtered A3M is $numLines"
 	fi
 fi
 
+
 # ---- generate TGT file ------ #
 tgt_file=$relnam.tgt
-if [ ! -f "$out_root/$tgt_file" ] || [ $force -eq 1 ]
+if [ ! -s "$out_root/$tgt_file" ] || [ $force -eq 1 ]
 then
-	$home/A3M_To_TGT -i $out_root/$seq_file -I $out_root/$a3m_file -o $out_root/$tgt_file -t $tmp_root -H $home 
+	$home/A3M_To_TGT -i $out_root/$seq_file -I $out_root/$a3m_file -o $out_root/$tgt_file -t $tmp_root -U $cpu_num -H $home 
 	OUT=$?
 	if [ $OUT -ne 0 ]
 	then

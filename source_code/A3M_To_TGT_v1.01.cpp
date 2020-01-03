@@ -112,7 +112,7 @@ void Kill_Invalid(string &in,string &out)
 void Usage(char *arg) 
 {
 	printf("Version: 1.01 \n");
-	printf("Usage: %s -i input_fasta_file -I input_a3m_file [ -o output_tgt_file ] [ -t temporary_root ] [-H home_root] [-C cut_num=20]\n",arg);
+	printf("Usage: %s -i input_fasta_file -I input_a3m_file [ -o output_tgt_file ] [ -t temporary_root ] [-H home_root] [-C cut_num=20] [-U cpu_num=-1]\n",arg);
 }
 //---- parameter editor ----//
 static option long_options[] =
@@ -123,6 +123,7 @@ static option long_options[] =
 	{"temp",    no_argument,       NULL, 't'},
 	{"home",    no_argument,       NULL, 'H'},
 	{"cut",     no_argument,       NULL, 'C'},
+	{"cpu",     no_argument,       NULL, 'U'},
 	{0, 0, 0, 0}
 };
 
@@ -141,11 +142,12 @@ int main(int argc, char** argv)
 	string temporary_root="";
 	string home_root="";
 	string cut_num="20";
+	string cpu="-1";
 
 	extern char* optarg;
 	char c = 0;
 	int option_index=0;
-	while ((c = getopt_long(argc, argv, "i:I:o:t:H:C:",long_options,&option_index)) != EOF) 
+	while ((c = getopt_long(argc, argv, "i:I:o:t:H:C:U:",long_options,&option_index)) != EOF) 
 	{
 		switch (c) 
 		{
@@ -166,6 +168,9 @@ int main(int argc, char** argv)
 				break;
 			case 'C':
 				cut_num = optarg;
+				break;
+			case 'U':
+				cpu = optarg;
 				break;
 			default:
 				Usage(argv[0]);
@@ -246,7 +251,7 @@ int main(int argc, char** argv)
 	string mtxfile1=temporary_root+"/"+targetName+".mtx";
 
 // command to generate features 
-	string genMAIN_cmd = home_root + "/util/genMAIN.sh " + input_a3m + " "+temporary_root+"/" + " "+home_root+"/" + " " + cut_num;
+	string genMAIN_cmd = home_root + "/util/genMAIN.sh " + input_a3m + " "+temporary_root+"/" + " "+home_root+"/" + " " + cpu + " " + cut_num;
 	string genSS3_cmd = home_root + "/util/genSS3.sh " + mtxfile1 + " "+temporary_root+"/"    + " "+home_root+"/";
 	string genDIS_cmd = home_root + "/util/genDIS.sh " + mtxfile1 + " "+temporary_root+"/"    + " "+home_root+"/";
 	string genSS8_cmd = home_root + "/util/genSS8.sh " + targetName + " "+temporary_root+"/"  + " "+home_root+"/";

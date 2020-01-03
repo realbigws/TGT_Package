@@ -57,11 +57,11 @@ cd ../
 
 3. jackhmmer (optional)
 
-To compile the other executables, run the following commands:
+To re-compile the executables, run the following commands:
 
-cd jackhmm/source_code/
-	make
-cd ../../
+cd jackhmm/
+	./install
+cd ../
 
 
 --------------
@@ -120,39 +120,40 @@ Again, you may rename these files with prefix 'uniclust30'.
 
 
 
-======
-Usage:
-======
+#=======
+# Usage:
+#=======
 
-A3M_TGT_Gen v1.08 [Dec-05-2019] 
+
+A3M_TGT_Gen v1.00 [Dec-06-2019] 
     Generate A3M and TGT file from a given sequence in FASTA format. 
 
-USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-h package] [-d database] [-o out_root] [-c CPU_num] [-m memory] 
-                         [-n iteration] [-N max_num] [-e evalue] [-E neff] [-C coverage] [-K remove_tmp] [-f force] 
-                         [-A addi_meff] [-V addi_eval] [-D addi_db]  [-H home] 
+USAGE:  ./A3M_TGT_Gen.sh <-i input_fasta> [-o out_root] [-c CPU_num] [-m memory] [-h package] [-d database] 
+                         [-n iteration] [-e evalue] [-E neff] [-C coverage] [-M min_cut] [-N max_num] 
+                         [-A addi_meff] [-V addi_eval] [-D addi_db] [-K remove_tmp] [-f force] [-H home] 
 Options:
 
 ***** required arguments *****
 -i input_fasta  : Query protein sequence in FASTA format. 
 
 ***** optional arguments *****
--h package      : The selected package to generate A3M file. [default = hhsuite2] 
-                  users may use other packages: hhsuite3, jackhmm, or buildali2.
-
--d database     : The selected database for sequence search. [default = uniprot20] 
-                  users may use other uniprot20 databases to run hhsuite2 or hhsuite3,
-                  or use uniref90 for jackhmm, and nr_databases for buildali2.
-
+#--| misc parameters
 -o out_root     : Default output would the current directory. [default = './${input_name}_A3MTGT'] 
 
 -c CPU_num      : Number of processors. [default = 4] 
 
 -m memory       : Maximal allowed memory (for hhsuite2 or hhsuite3 only). [default = 3.0 (G)] 
 
--n iteration    : Maximal iteration to run the seleced package. [default = 2] 
+#--| search engine and database
+-h package      : The selected package to generate A3M file. [default = hhsuite2] 
+                  users may use other packages: hhsuite3, jackhmm, or buildali2.
 
--N max_num      : Maximal number of sequences in the generated MSA. [default = -1] 
-                  -1 indicates that we DON'T perform any filtering 
+-d database     : The selected database for sequence search. [default = uniprot20_2016_02] 
+                  users may use other uniprot20 databases to run hhsuite2 or hhsuite3,
+                  or use uniref90 for jackhmm, and nr_databases for buildali2.
+
+#--| search strategy
+-n iteration    : Maximal iteration to run the seleced package. [default = 2] 
 
 -e evalue       : E-value cutoff for the selected package. [default = 0.001] 
 
@@ -162,11 +163,14 @@ Options:
                   if set to -1, then automatically determine coverage value. 
                   if set to any other positive value, then use this -cov in HHblits. 
 
--K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] 
+#--| filter strategy
+-M min_cut      : Minimal coverage of sequences in the generated MSA. [default = -1] 
+                  -1 indicates that we DON'T perform any filtering. Please set from 50 to 70. 
 
--f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] 
+-N max_num      : Maximal number of sequences in the generated MSA. [default = -1] 
+                  -1 indicates that we DON'T perform any filtering. For example, set 20000 here. 
 
-***** additional A3M *********
+#--| additional A3M
 -A addi_meff    : run additional A3M only if the previous ln(meff) is lower than this. [default = -1] 
                   -1 indicates that we DON'T search for additional A3M. 
 
@@ -174,15 +178,20 @@ Options:
 
 -D addi_db      : run additional A3M using a given database. [default = metaclust50] 
 
+#--| other options
+-K remove_tmp   : Remove temporary folder or not. [default = 1 to remove] 
+
+-f force        : If specificied, then FORCE overwrite existing files. [default = 0 NOT to] 
+
 ***** home relevant **********
 -H home         : home directory of TGT_Package.
                   [default = .]
 
 
 
-================
-Running example:
-================
+#=================
+# Running example:
+#=================
 
 
 #-------------- part I: generate A3M without filtering and metagenomics ------------------#
@@ -197,17 +206,22 @@ Running example:
 ./A3M_TGT_Gen.sh -c 12 -i example/1pazA.fasta -o 1pazA_out -h buildali2 -d nr_databases -n 5
 
 
-#-------------- part II: generate A3M with filtering and metagenomics ------------------#
+#-------------- part II: generate A3M with filtering and metagenomics --------------------#
 
 ./A3M_TGT_Gen.sh -i example/T1001-D1.fasta -d uniprot20 -N 5000 -A 6
-#-> [note]: here 5000 is the maximal number of sequences in the generated A3M..
+#-> [note]: here 5000 is the maximal number of sequences in the generated A3M.
 #           6 is ln(meff) threshold to run additional A3M.
 
 
+#-------------- part III: generate a variety of A3Ms with user-defined strategies --------#
 
-===========
-References:
-===========
+./SEQ_to_A3Ms.sh -i example/1pazA.fasta -x '1e-3:3:-1|1:3:-1' -y 'null' -z 'null' -X uniprot20 -c 12
+#-> [note]: here we only use the HHblits strategies on uniprot20 database.
+
+
+#============
+# References:
+#============
 
 [hhsuite]:
     https://github.com/soedinglab/hh-suite

@@ -209,14 +209,15 @@ then
 else
 	cp $tmp_root/$relnam.msa_addi $tmp_root/$relnam.msa
 fi
-cat $in_seq $tmp_root/$relnam.msa > $tmp_root/$relnam.msa_seq
 
 #---- step 4.5: remove redundancy ----#
 if [ "$seqid" != "0" ]
 then
-	$home/jackhmm/cd-hit -i $tmp_root/$relnam.msa_seq -o $tmp_root/$relnam.msa_nored -c $seqid -s 0.9
+	$home/jackhmm/cd-hit -i $tmp_root/$relnam.msa -o $tmp_root/$relnam.msa_seq -c $seqid -s 0.9
+	cat $in_seq $tmp_root/$relnam.msa_seq > $tmp_root/$relnam.msa_nored
+	rm -f $tmp_root/$relnam.msa_seq
 else
-	cp $tmp_root/$relnam.msa_seq $tmp_root/$relnam.msa_nored
+	cat $in_seq $tmp_root/$relnam.msa > $tmp_root/$relnam.msa_nored
 fi
 
 #---- step 5: re-run hmmsearch ----#
